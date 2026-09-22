@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班級點數管理系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #EBF8FF;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E2E8F0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        /* Smooth bounce hover effect for interactive cards */
+        .card-bounce {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .card-bounce:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
+        }
+        .card-bounce:active {
+            transform: translateY(2px) scale(0.98);
+        }
+        /* Pet animation */
+        .pulse-pet {
+            animation: petPulse 2.5s infinite ease-in-out;
+        }
+        @keyframes petPulse {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+            50% { transform: translateY(-10px) scale(1.06) rotate(3deg); }
+        }
+        /* Custom Header Background SVG style */
+        .banner-bg {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between p-3 sm:p-5 overflow-x-hidden">
+
+    <!-- Top Header Banner -->
+    <header class="max-w-7xl mx-auto w-full bg-white/90 backdrop-blur-md rounded-3xl p-4 sm:p-5 shadow-sm border border-sky-100 mb-5 relative overflow-hidden">
+        <!-- Background decoration hills -->
+        <div class="absolute right-0 bottom-0 top-0 w-1/3 opacity-15 pointer-events-none flex items-end justify-end">
+            <svg viewBox="0 0 200 100" class="w-full h-full fill-emerald-500">
+                <path d="M 0,100 Q 50,20 100,100 T 200,100 Z" />
+            </svg>
+        </div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-amber-400 rounded-2xl flex items-center justify-center text-3xl shadow-md text-white rotate-[-3deg] shrink-0">
+                    🌱
+                </div>
+                <div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-wide">班級點數</h1>
+                        <span class="bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full border border-amber-200 shadow-2xs">
+                            小小的行動 讓班級更美好！
+                        </span>
+                    </div>
+                    <p class="text-slate-500 text-xs sm:text-sm font-semibold mt-0.5">一起努力，創造更棒的班級！</p>
+                </div>
+            </div>
+
+            <!-- Total Score & Control Tools -->
+            <div class="flex items-center gap-3 flex-wrap justify-end w-full md:w-auto">
+                <div class="bg-sky-50 border border-sky-200 px-4 py-2 rounded-2xl flex items-center gap-3 shadow-2xs">
+                    <i class="fa-solid fa-trophy text-amber-500 text-2xl"></i>
+                    <div>
+                        <div class="text-[11px] text-sky-600 font-bold">班級總點數</div>
+                        <div id="totalClassPointsDisplay" class="text-2xl font-black text-sky-700 leading-none">0</div>
+                    </div>
+                </div>
+
+                <button onclick="toggleAudio()" id="soundBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 w-11 h-11 rounded-2xl flex items-center justify-center transition shadow-2xs" title="音效切換">
+                    <i class="fa-solid fa-volume-high text-lg"></i>
+                </button>
+
+                <button onclick="openModal('modalSettings')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 transition shadow-2xs text-sm">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>班級管理</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Body -->
+    <main class="max-w-7xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        <!-- Left Section: 6 Main Colorful Buttons -->
+        <div class="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-4">
+            
+            <!-- 1. 個人點數 (Coral Pink) -->
+            <button onclick="openModal('modalStudents')" class="card-bounce bg-gradient-to-b from-rose-400 to-rose-500 text-white p-5 rounded-3xl shadow-md border-2 border-rose-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">⭐</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    👦⭐
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">個人點數</span>
+            </button>
+
+            <!-- 2. 小組任務 (Orange) -->
+            <button onclick="openModal('modalGroups')" class="card-bounce bg-gradient-to-b from-amber-400 to-amber-500 text-white p-5 rounded-3xl shadow-md border-2 border-amber-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">👥</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    👥🚩
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">小組任務</span>
+            </button>
+
+            <!-- 3. 隨機抽點 (Cyan) -->
+            <button onclick="openModal('modalRandom')" class="card-bounce bg-gradient-to-b from-teal-400 to-teal-500 text-white p-5 rounded-3xl shadow-md border-2 border-teal-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">🎲</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    🎲✨
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">隨機抽點</span>
+            </button>
+
+            <!-- 4. 課堂計時 (Blue) -->
+            <button onclick="openModal('modalTimer')" class="card-bounce bg-gradient-to-b from-sky-400 to-sky-500 text-white p-5 rounded-3xl shadow-md border-2 border-sky-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">⏱️</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    ⏱️🔔
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">課堂計時</span>
+            </button>
+
+            <!-- 5. 兌換商店 (Purple) -->
+            <button onclick="openModal('modalShop')" class="card-bounce bg-gradient-to-b from-purple-400 to-purple-500 text-white p-5 rounded-3xl shadow-md border-2 border-purple-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">🏪</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    🏪🎁
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">兌換商店</span>
+            </button>
+
+            <!-- 6. 寵物世界 (Green) -->
+            <button onclick="openModal('modalPet')" class="card-bounce bg-gradient-to-b from-emerald-400 to-emerald-500 text-white p-5 rounded-3xl shadow-md border-2 border-emerald-300/60 flex flex-col items-center justify-center gap-3 min-h-[170px] text-center group relative overflow-hidden cursor-pointer">
+                <div class="absolute -right-3 -bottom-3 opacity-15 text-8xl pointer-events-none">🐱</div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition">
+                    🐱🌱
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-wider">寵物世界</span>
+            </button>
+
+        </div>
+
+        <!-- Right Sidebar Section -->
+        <div class="lg:col-span-4 flex flex-col gap-4">
+            
+            <!-- 最近加分紀錄 -->
+            <div class="bg-white/95 backdrop-blur-md rounded-3xl p-5 shadow-xs border border-slate-200/80 flex flex-col max-h-[340px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <h2 class="font-black text-slate-700 flex items-center gap-2 text-lg">
+                        <i class="fa-solid fa-clock-rotate-left text-teal-500"></i>
+                        <span>最近加分紀錄</span>
+                    </h2>
+                    <button onclick="clearLogs()" class="text-xs font-bold text-slate-400 hover:text-rose-500 transition">清空</button>
+                </div>
+                
+                <div id="logsContainer" class="overflow-y-auto space-y-2 pr-1 flex-1">
+                    <!-- Dynamic Log Items Rendered Here -->
+                </div>
+            </div>
+
+            <!-- 快速加分面板 -->
+            <div class="bg-teal-500/10 rounded-3xl p-5 border-2 border-teal-200 flex flex-col gap-3">
+                <h2 class="font-black text-teal-800 flex items-center gap-2 text-lg">
+                    <i class="fa-solid fa-bolt text-amber-500"></i>
+                    <span>快速加分</span>
+                </h2>
+
+                <div>
+                    <label class="block text-xs font-bold text-teal-900 mb-1">1. 選擇學生 / 小組：</label>
+                    <select id="quickStudentSelect" class="w-full bg-white border border-teal-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal-400 shadow-2xs">
+                        <option value="">-- 請選擇學生或小組 --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-teal-900 mb-1">2. 選擇加分事由：</label>
+                    <div class="flex flex-wrap gap-1.5" id="quickReasonsList">
+                        <!-- Preset Reasons Chips -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-teal-900 mb-1">3. 點擊分數發送：</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="triggerQuickAdd(1)" class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white font-black py-2.5 rounded-xl shadow-xs transition text-lg">+1</button>
+                        <button onclick="triggerQuickAdd(2)" class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white font-black py-2.5 rounded-xl shadow-xs transition text-lg">+2</button>
+                        <button onclick="triggerQuickAdd(5)" class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white font-black py-2.5 rounded-xl shadow-xs transition text-lg">+5</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto w-full text-center text-xs text-slate-400 font-bold mt-6 py-2">
+        班級點數電子白板管理系統 &copy; 2026 | 陪伴孩子快樂學習成長
+    </footer>
+
+    <!-- MODAL 1: 個人點數 -->
+    <div id="modalStudents" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-rose-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">👦⭐</span>
+                    <h2 class="text-2xl font-black">個人點數管理</h2>
+                </div>
+                <button onclick="closeModal('modalStudents')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3 bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                    <div class="text-slate-700 font-bold text-sm">
+                        點擊學生即可快速進行加扣分！
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="showAddStudentDialog()" class="bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-2xs transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 新增學生
+                        </button>
+                    </div>
+                </div>
+
+                <div id="studentsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Dynamic Students Rendered Here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: 小組任務 -->
+    <div id="modalGroups" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-amber-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">👥🚩</span>
+                    <h2 class="text-2xl font-black">小組任務與競賽</h2>
+                </div>
+                <button onclick="closeModal('modalGroups')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="groupsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    <!-- Dynamic Groups Rendered Here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: 隨機抽點 -->
+    <div id="modalRandom" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-xl flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-teal-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🎲✨</span>
+                    <h2 class="text-2xl font-black">隨機抽點</h2>
+                </div>
+                <button onclick="closeModal('modalRandom')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-8 flex flex-col items-center justify-center text-center gap-6">
+                <div id="randomDisplayCard" class="w-full h-48 bg-gradient-to-br from-teal-50 to-teal-100 border-4 border-dashed border-teal-300 rounded-3xl flex flex-col items-center justify-center p-4 transition-all">
+                    <div id="randomAvatar" class="text-6xl mb-2">🎯</div>
+                    <div id="randomResultText" class="text-3xl font-black text-teal-800">準備抽點！</div>
+                    <div id="randomGroupText" class="text-sm font-bold text-teal-600 mt-1">請點擊下方按鈕開始</div>
+                </div>
+
+                <div class="flex gap-4 w-full">
+                    <button onclick="spinRandomStudent()" id="spinBtn" class="flex-1 bg-teal-500 hover:bg-teal-600 text-white text-xl font-black py-4 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-dice"></i>
+                        <span>抽取幸運同學</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: 課堂計時 -->
+    <div id="modalTimer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-lg flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-sky-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">⏱️🔔</span>
+                    <h2 class="text-2xl font-black">課堂計時器</h2>
+                </div>
+                <button onclick="closeModal('modalTimer')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-8 flex flex-col items-center justify-center gap-6">
+                <!-- Clock Display -->
+                <div class="text-7xl font-black font-mono text-sky-600 bg-sky-50 px-8 py-6 rounded-3xl border-4 border-sky-200 tracking-wider shadow-inner" id="timerClock">
+                    05:00
+                </div>
+
+                <!-- Presets -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="setTimerSeconds(60)" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-3 py-1.5 rounded-xl text-sm transition">1分鐘</button>
+                    <button onclick="setTimerSeconds(180)" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-3 py-1.5 rounded-xl text-sm transition">3分鐘</button>
+                    <button onclick="setTimerSeconds(300)" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-3 py-1.5 rounded-xl text-sm transition">5分鐘</button>
+                    <button onclick="setTimerSeconds(600)" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-3 py-1.5 rounded-xl text-sm transition">10分鐘</button>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex gap-4 w-full">
+                    <button onclick="toggleTimer()" id="timerToggleBtn" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl text-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i>
+                        <span>開始計時</span>
+                    </button>
+                    <button onclick="resetTimer()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-3.5 rounded-2xl text-lg transition">
+                        重設
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: 兌換商店 -->
+    <div id="modalShop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-purple-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🏪🎁</span>
+                    <h2 class="text-2xl font-black">點數兌換商店</h2>
+                </div>
+                <button onclick="closeModal('modalShop')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5" id="shopGrid">
+                    <!-- Dynamic Shop Items -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: 寵物世界 -->
+    <div id="modalPet" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-lg flex flex-col shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-emerald-500 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🐱🌱</span>
+                    <h2 class="text-2xl font-black">班級守護獸 - 喵喵</h2>
+                </div>
+                <button onclick="closeModal('modalPet')" class="bg-white/20 hover:bg-white/30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl transition">✕</button>
+            </div>
+            <!-- Body -->
+            <div class="p-8 flex flex-col items-center justify-center text-center gap-6">
+                <div class="relative bg-emerald-50 rounded-3xl p-8 border-4 border-emerald-200 w-full flex flex-col items-center">
+                    <div id="petAvatar" class="text-8xl pulse-pet my-4 cursor-pointer" onclick="interactWithPet()">🐱</div>
+                    <h3 id="petName" class="text-2xl font-black text-emerald-800">班級幸運貓</h3>
+                    <p id="petLevel" class="text-sm font-bold text-emerald-600 mb-4">等級 1 (班級總積分成長中)</p>
+
+                    <!-- Level Bar -->
+                    <div class="w-full bg-emerald-200 h-4 rounded-full overflow-hidden mb-2">
+                        <div id="petExpBar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 20%"></div>
+                    </div>
+                    <div id="petExpText" class="text-xs font-bold text-emerald-700">距離升級還差 30 點</div>
+                </div>
+
+                <button onclick="interactWithPet()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-2xl shadow-md transition active:scale-95 flex items-center gap-2">
+                    <span>🐟 給寵物餵食罐罐</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: 班級設置與重置 -->
+    <div id="modalSettings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+            <div class="bg-slate-700 p-5 text-white flex items-center justify-between">
+                <h2 class="text-xl font-black">班級設定</h2>
+                <button onclick="closeModal('modalSettings')" class="text-white hover:opacity-80 font-bold text-lg">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <button onclick="confirmResetAllPoints()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow-2xs">
+                    🔄 歸零全班點數
+                </button>
+                <button onclick="confirmResetDefaultData()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition shadow-2xs">
+                    ⚠️ 恢復預設示範資料
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Dialog Modal (Replacing alert / confirm) -->
+    <div id="customDialog" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95 duration-150">
+            <div id="dialogIcon" class="text-5xl">💡</div>
+            <div id="dialogTitle" class="text-xl font-black text-slate-800">提示</div>
+            <div id="dialogMessage" class="text-sm font-semibold text-slate-600">訊息內容</div>
+            <div id="dialogInputContainer" class="w-full hidden">
+                <input id="dialogInput" type="text" class="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-teal-400">
+            </div>
+            <div class="flex gap-3 w-full mt-2" id="dialogButtons">
+                <!-- Dynamic Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Mock Data
+        const DEFAULT_STUDENTS = [
+            { id: 1, name: "王小明", avatar: "👦", score: 12, group: "第一組" },
+            { id: 2, name: "林小美", avatar: "👧", score: 15, group: "第一組" },
+            { id: 3, name: "陳大華", avatar: "🧒", score: 8,  group: "第二組" },
+            { id: 4, name: "張婷婷", avatar: "👧", score: 10, group: "第二組" },
+            { id: 5, name: "黃志明", avatar: "👦", score: 14, group: "第三組" },
+            { id: 6, name: "李佳穎", avatar: "👧", score: 11, group: "第三組" },
+            { id: 7, name: "趙子龍", avatar: "👦", score: 9,  group: "第四組" },
+            { id: 8, name: "孫小珍", avatar: "👧", score: 13, group: "第四組" }
+        ];
+
+        const DEFAULT_GROUPS = [
+            { id: "第一組", name: "第一組 🚀", score: 27 },
+            { id: "第二組", name: "第二組 ⚡", score: 18 },
+            { id: "第三組", name: "第三組 🌟", score: 25 },
+            { id: "第四組", name: "第四組 🔥", score: 22 }
+        ];
+
+        const REASONS = [
+            "上課專注", "主動發言", "作業完成", "幫助同學", "環境整潔", "秩序良好"
+        ];
+
+        const DEFAULT_SHOP_ITEMS = [
+            { id: 1, title: "免寫作業一次", cost: 20, icon: "📝" },
+            { id: 2, title: "自選座位一天", cost: 15, icon: "🪑" },
+            { id: 3, title: "擔任一日班長", cost: 25, icon: "👑" },
+            { id: 4, title: "下課提早5分鐘", cost: 30, icon: "🔔" },
+            { id: 5, title: "點播背景音樂", cost: 10, icon: "🎵" }
+        ];
+
+        let state = {
+            students: [],
+            groups: [],
+            shop: [],
+            logs: [],
+            soundEnabled: true,
+            selectedReason: "上課專注"
+        };
+
+        // Web Audio API Synthesizer Context
+        let audioCtx = null;
+
+        // On Page Load Initialization
+        window.onload = function() {
+            loadData();
+            renderAll();
+            setupTimer();
+        };
+
+        function loadData() {
+            const savedStudents = localStorage.getItem('class_students');
+            const savedGroups = localStorage.getItem('class_groups');
+            const savedShop = localStorage.getItem('class_shop');
+            const savedLogs = localStorage.getItem('class_logs');
+
+            state.students = savedStudents ? JSON.parse(savedStudents) : [...DEFAULT_STUDENTS];
+            state.groups = savedGroups ? JSON.parse(savedGroups) : [...DEFAULT_GROUPS];
+            state.shop = savedShop ? JSON.parse(savedShop) : [...DEFAULT_SHOP_ITEMS];
+            state.logs = savedLogs ? JSON.parse(savedLogs) : [
+                { id: 1, name: "王小明", reason: "上課專注", delta: 2, time: "10:24" },
+                { id: 2, name: "林小美", reason: "主動發言", delta: 1, time: "10:20" },
+                { id: 3, name: "陳大華", reason: "作業完成", delta: 2, time: "10:18" },
+                { id: 4, name: "黃志明", reason: "幫助同學", delta: 1, time: "10:15" },
+                { id: 5, name: "張婷婷", reason: "環境整潔", delta: 2, time: "10:12" }
+            ];
+        }
+
+        function saveData() {
+            localStorage.setItem('class_students', JSON.stringify(state.students));
+            localStorage.setItem('class_groups', JSON.stringify(state.groups));
+            localStorage.setItem('class_shop', JSON.stringify(state.shop));
+            localStorage.setItem('class_logs', JSON.stringify(state.logs));
+        }
+
+        function renderAll() {
+            renderTotalPoints();
+            renderStudents();
+            renderGroups();
+            renderQuickSelector();
+            renderQuickReasons();
+            renderLogs();
+            renderShop();
+            renderPet();
+        }
+
+        function renderTotalPoints() {
+            const total = state.students.reduce((acc, curr) => acc + curr.score, 0);
+            document.getElementById('totalClassPointsDisplay').innerText = total;
+        }
+
+        function renderStudents() {
+            const grid = document.getElementById('studentsGrid');
+            if (!grid) return;
+
+            grid.innerHTML = state.students.map(s => `
+                <div class="bg-white border-2 border-rose-100 rounded-2xl p-4 flex flex-col items-center shadow-2xs hover:shadow-md transition">
+                    <div class="text-4xl mb-1">${s.avatar}</div>
+                    <div class="font-black text-slate-800 text-base">${s.name}</div>
+                    <div class="text-xs text-slate-400 font-bold mb-2">${s.group}</div>
+                    <div class="text-2xl font-black text-rose-500 mb-3">${s.score} <span class="text-xs">分</span></div>
+                    <div class="flex gap-1 w-full">
+                        <button onclick="changeStudentScore(${s.id}, -1)" class="flex-1 bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-600 font-bold py-1 rounded-lg text-sm transition">-1</button>
+                        <button onclick="changeStudentScore(${s.id}, 1)" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-1 rounded-lg text-sm transition">+1</button>
+                        <button onclick="changeStudentScore(${s.id}, 2)" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-1 rounded-lg text-sm transition">+2</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGroups() {
+            const grid = document.getElementById('groupsGrid');
+            if (!grid) return;
+
+            grid.innerHTML = state.groups.map(g => `
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 flex flex-col items-center shadow-2xs">
+                    <div class="font-black text-amber-900 text-xl mb-1">${g.name}</div>
+                    <div class="text-3xl font-black text-amber-600 mb-4">${g.score} <span class="text-sm">分</span></div>
+                    <div class="flex gap-2 w-full">
+                        <button onclick="changeGroupScore('${g.id}', 1)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-sm transition">+1 分</button>
+                        <button onclick="changeGroupScore('${g.id}', 2)" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-sm transition">+2 分</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderQuickSelector() {
+            const select = document.getElementById('quickStudentSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">-- 請選擇學生或小組 --</option>' +
+                state.students.map(s => `<option value="S_${s.id}">👤 學生：${s.name}</option>`).join('') +
+                state.groups.map(g => `<option value="G_${g.id}">👥 小組：${g.name}</option>`).join('');
+        }
+
+        function renderQuickReasons() {
+            const container = document.getElementById('quickReasonsList');
+            if (!container) return;
+
+            container.innerHTML = REASONS.map(r => `
+                <button onclick="selectReason('${r}')" class="px-2.5 py-1 text-xs font-bold rounded-lg border ${state.selectedReason === r ? 'bg-teal-600 text-white border-teal-600 shadow-2xs' : 'bg-white text-teal-800 border-teal-200 hover:bg-teal-100'} transition cursor-pointer">
+                    ${r}
+                </button>
+            `).join('');
+        }
+
+        function selectReason(reason) {
+            state.selectedReason = reason;
+            renderQuickReasons();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+            if (!container) return;
+
+            if (state.logs.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 text-xs py-6">暫無異動紀錄</div>`;
+                return;
+            }
+
+            container.innerHTML = state.logs.slice().reverse().map(l => `
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-teal-100 text-teal-700 font-bold text-xs flex items-center justify-center shrink-0">${l.name.substring(0, 1)}</span>
+                        <span class="font-bold text-slate-700">${l.name}</span>
+                        <span class="text-xs text-slate-400 font-semibold">${l.reason}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-black ${l.delta >= 0 ? 'text-teal-600' : 'text-rose-500'}">${l.delta >= 0 ? '+' + l.delta : l.delta}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">${l.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addLog(name, reason, delta) {
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            state.logs.push({
+                id: Date.now(),
+                name,
+                reason,
+                delta,
+                time: timeStr
+            });
+            if (state.logs.length > 30) state.logs.shift(); // Keep max 30 records
+            renderLogs();
+            saveData();
+        }
+
+        function changeStudentScore(studentId, delta, reasonOverride = "表現良好") {
+            const student = state.students.find(s => s.id === studentId);
+            if (!student) return;
+
+            student.score += delta;
+            addLog(student.name, reasonOverride, delta);
+            playSound(delta > 0 ? 'win' : 'click');
+            saveData();
+            renderAll();
+        }
+
+        function changeGroupScore(groupId, delta, reasonOverride = "小組表現") {
+            const group = state.groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            group.score += delta;
+            
+            // Also add point to students in group
+            state.students.filter(s => s.group === groupId).forEach(s => {
+                s.score += delta;
+            });
+
+            addLog(group.name, reasonOverride, delta);
+            playSound('win');
+            saveData();
+            renderAll();
+        }
+
+        function triggerQuickAdd(delta) {
+            const val = document.getElementById('quickStudentSelect').value;
+            if (!val) {
+                showCustomDialog('提示', '請先選擇要加分的學生或小組！', '⚠️');
+                return;
+            }
+
+            if (val.startsWith('S_')) {
+                const sId = parseInt(val.replace('S_', ''));
+                changeStudentScore(sId, delta, state.selectedReason);
+            } else if (val.startsWith('G_')) {
+                const gId = val.replace('G_', '');
+                changeGroupScore(gId, delta, state.selectedReason);
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            playSound('click');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        let isSpinning = false;
+        function spinRandomStudent() {
+            if (isSpinning || state.students.length === 0) return;
+            isSpinning = true;
+
+            const avatarEl = document.getElementById('randomAvatar');
+            const resultText = document.getElementById('randomResultText');
+            const groupText = document.getElementById('randomGroupText');
+
+            let counter = 0;
+            const totalRolls = 20;
+            const interval = setInterval(() => {
+                const tempStudent = state.students[Math.floor(Math.random() * state.students.length)];
+                avatarEl.innerText = tempStudent.avatar;
+                resultText.innerText = tempStudent.name;
+                groupText.innerText = tempStudent.group;
+                playSound('beep');
+
+                counter++;
+                if (counter >= totalRolls) {
+                    clearInterval(interval);
+                    isSpinning = false;
+                    
+                    const winner = state.students[Math.floor(Math.random() * state.students.length)];
+                    avatarEl.innerText = winner.avatar;
+                    resultText.innerText = winner.name;
+                    groupText.innerText = `${winner.group} - 幸運兒！`;
+                    
+                    playSound('win');
+                    confetti({
+                        particleCount: 80,
+                        spread: 60,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }, 100);
+        }
+
+        // Timer Logic
+        let timerSeconds = 300;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        function setupTimer() {
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timerClock').innerText = 
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function setTimerSeconds(secs) {
+            if (isTimerRunning) toggleTimer();
+            timerSeconds = secs;
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerToggleBtn');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btn.innerHTML = `<i class="fa-solid fa-play"></i><span>繼續計時</span>`;
+                btn.classList.replace('bg-amber-500', 'bg-sky-500');
+            } else {
+                if (timerSeconds <= 0) return;
+                isTimerRunning = true;
+                btn.innerHTML = `<i class="fa-solid fa-pause"></i><span>暫停</span>`;
+                btn.classList.replace('bg-sky-500', 'bg-amber-500');
+
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    updateTimerDisplay();
+
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btn.innerHTML = `<i class="fa-solid fa-play"></i><span>開始計時</span>`;
+                        btn.classList.replace('bg-amber-500', 'bg-sky-500');
+                        playSound('alarm');
+                        showCustomDialog('時間到', '⏰ 課堂時間已結束！', '🔔');
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            if (isTimerRunning) toggleTimer();
+            timerSeconds = 300;
+            updateTimerDisplay();
+        }
+
+        // Shop Items Render & Redeem
+        function renderShop() {
+            const grid = document.getElementById('shopGrid');
+            if (!grid) return;
+
+            grid.innerHTML = state.shop.map(item => `
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-5 flex flex-col items-center text-center shadow-2xs">
+                    <div class="text-4xl mb-2">${item.icon}</div>
+                    <div class="font-black text-purple-900 text-lg mb-1">${item.title}</div>
+                    <div class="text-purple-600 font-bold mb-4">${item.cost} 點數</div>
+                    <button onclick="promptRedeemItem('${item.title}', ${item.cost})" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded-xl text-sm transition">
+                        兌換獎勵
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function promptRedeemItem(title, cost) {
+            showCustomInputDialog('獎勵兌換', `請輸入要兌換「${title}」的學生名字：`, (studentName) => {
+                if (!studentName) return;
+
+                const student = state.students.find(s => s.name.trim() === studentName.trim());
+                if (!student) {
+                    showCustomDialog('找不到學生', `找不到名為【${studentName}】的學生！`, '❌');
+                    return;
+                }
+
+                if (student.score < cost) {
+                    showCustomDialog('點數不足', `【${student.name}】點數不足！(現有 ${student.score} 點，需 ${cost} 點)`, '⚠️');
+                    return;
+                }
+
+                student.score -= cost;
+                addLog(student.name, `兌換：${title}`, -cost);
+                playSound('win');
+                saveData();
+                renderAll();
+                showCustomDialog('兌換成功', `🎉 兌換成功！【${student.name}】扣除 ${cost} 點。`, '🎁');
+            });
+        }
+
+        // Pet World Logic
+        function renderPet() {
+            const total = state.students.reduce((acc, curr) => acc + curr.score, 0);
+            const level = Math.floor(total / 50) + 1;
+            const currentLevelProgress = total % 50;
+            const percent = (currentLevelProgress / 50) * 100;
+
+            const petExpBar = document.getElementById('petExpBar');
+            const petLevel = document.getElementById('petLevel');
+            const petExpText = document.getElementById('petExpText');
+
+            if (petExpBar) petExpBar.style.width = `${percent}%`;
+            if (petLevel) petLevel.innerText = `等級 ${level} (等級依全班總積分成長)`;
+            if (petExpText) petExpText.innerText = `距離下次升級還差 ${50 - currentLevelProgress} 點`;
+        }
+
+        function interactWithPet() {
+            playSound('win');
+            confetti({
+                particleCount: 30,
+                spread: 40,
+                origin: { y: 0.7 }
+            });
+        }
+
+        function clearLogs() {
+            state.logs = [];
+            renderLogs();
+            saveData();
+        }
+
+        function confirmResetAllPoints() {
+            showCustomConfirmDialog('重置確認', '確定要將全班與小組點數歸零嗎？', () => {
+                state.students.forEach(s => s.score = 0);
+                state.groups.forEach(g => g.score = 0);
+                saveData();
+                renderAll();
+                closeModal('modalSettings');
+            });
+        }
+
+        function confirmResetDefaultData() {
+            showCustomConfirmDialog('重置確認', '確定要恢復為系統預設範例資料嗎？', () => {
+                localStorage.clear();
+                loadData();
+                renderAll();
+                closeModal('modalSettings');
+            });
+        }
+
+        function showAddStudentDialog() {
+            showCustomInputDialog('新增學生', '請輸入新學生姓名：', (name) => {
+                if (!name || !name.trim()) return;
+                const newId = Date.now();
+                state.students.push({
+                    id: newId,
+                    name: name.trim(),
+                    avatar: "👦",
+                    score: 0,
+                    group: "第一組"
+                });
+                saveData();
+                renderAll();
+            });
+        }
+
+        function showCustomDialog(title, message, icon = '💡') {
+            const dialog = document.getElementById('customDialog');
+            document.getElementById('dialogIcon').innerText = icon;
+            document.getElementById('dialogTitle').innerText = title;
+            document.getElementById('dialogMessage').innerText = message;
+            document.getElementById('dialogInputContainer').classList.add('hidden');
+
+            const btnContainer = document.getElementById('dialogButtons');
+            btnContainer.innerHTML = `
+                <button onclick="closeCustomDialog()" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2.5 rounded-xl transition">確定</button>
+            `;
+
+            dialog.classList.remove('hidden');
+        }
+
+        function showCustomConfirmDialog(title, message, onConfirm) {
+            const dialog = document.getElementById('customDialog');
+            document.getElementById('dialogIcon').innerText = '❓';
+            document.getElementById('dialogTitle').innerText = title;
+            document.getElementById('dialogMessage').innerText = message;
+            document.getElementById('dialogInputContainer').classList.add('hidden');
+
+            const btnContainer = document.getElementById('dialogButtons');
+            btnContainer.innerHTML = `
+                <button onclick="closeCustomDialog()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition">取消</button>
+                <button id="dialogConfirmBtn" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-xl transition">確定</button>
+            `;
+
+            document.getElementById('dialogConfirmBtn').onclick = () => {
+                closeCustomDialog();
+                onConfirm();
+            };
+
+            dialog.classList.remove('hidden');
+        }
+
+        function showCustomInputDialog(title, message, onSubmit) {
+            const dialog = document.getElementById('customDialog');
+            document.getElementById('dialogIcon').innerText = '✏️';
+            document.getElementById('dialogTitle').innerText = title;
+            document.getElementById('dialogMessage').innerText = message;
+            
+            const inputContainer = document.getElementById('dialogInputContainer');
+            const input = document.getElementById('dialogInput');
+            input.value = '';
+            inputContainer.classList.remove('hidden');
+
+            const btnContainer = document.getElementById('dialogButtons');
+            btnContainer.innerHTML = `
+                <button onclick="closeCustomDialog()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition">取消</button>
+                <button id="dialogSubmitBtn" class="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-bold py-2.5 rounded-xl transition">送出</button>
+            `;
+
+            document.getElementById('dialogSubmitBtn').onclick = () => {
+                const val = input.value;
+                closeCustomDialog();
+                onSubmit(val);
+            };
+
+            dialog.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeCustomDialog() {
+            document.getElementById('customDialog').classList.add('hidden');
+        }
+
+        function playSound(type) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                } else if (type === 'beep') {
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.04);
+                } else if (type === 'win') {
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); // A5
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'alarm') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function toggleAudio() {
+            state.soundEnabled = !state.soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            if (state.soundEnabled) {
+                btn.innerHTML = `<i class="fa-solid fa-volume-high text-lg"></i>`;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-volume-xmark text-lg text-rose-500"></i>`;
+            }
+        }
+    </script>
+</body>
+</html>
